@@ -12,14 +12,28 @@ func setup() {
 	conn = NewClient(os.Getenv("API_KEY"))
 }
 
+func TestGetStopsFromChicagoData(t *testing.T) {
+	stops, err := GetStopsFromChicagoData()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("Got %d stops\n", len(stops))
+
+	filteredStops := GetStopsByName(stops, "Clark/Division")
+	for _, stop := range filteredStops {
+		fmt.Printf("Got stop %s: %s\n", stop.StopID, stop.StopName)
+	}
+}
+
 func TestArrivals(t *testing.T) {
 	setup()
 	arrivalReq := ArrivalsRequest{
-		MapID: "40530",
+		MapID: "40630",
 	}
 	resp, err := conn.GetArrivalsAtStation(arrivalReq)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	for _, arrival := range resp.Eta {

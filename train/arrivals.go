@@ -2,7 +2,7 @@ package train
 
 import (
 	"encoding/xml"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -47,6 +47,7 @@ type APIArrivalsResponse struct {
 	} `xml:"eta"`
 }
 
+// GetArrivalsAtStation Get arrival predictions for a train
 func (c *Client) GetArrivalsAtStation(arrivalRequest ArrivalsRequest) (*APIArrivalsResponse, error) {
 	//Create request
 	requestURL := "http://lapi.transitchicago.com/api/1.0/ttarrivals.aspx"
@@ -91,17 +92,10 @@ func (c *Client) GetArrivalsAtStation(arrivalRequest ArrivalsRequest) (*APIArriv
 		responseStruct.Eta[i].ArrivalTimeParsed = ConvertCTATime(val.ArrivalTimeRaw)
 	}
 
-	return &responseStruct, nil
-}
-
-func ConvertCTATime(timeString string) time.Time {
-	//Golang time: Mon Jan 2 15:04:05 MST 2006
-	//CTA time example: 20240415 10:46:42
-	loc, nil := time.LoadLocation("America/Chicago")
-	timeFormat := "20060102 15:04:05"
-	parsedTime, err := time.ParseInLocation(timeFormat, timeString, loc)
-	if err != nil {
-		fmt.Printf("This shouldn't happen. Error parsing CTA time: %s\n", err.Error())
+	//Check for an error
+	if responseStruct.ErrCd != "0" {
+		return nil, errors.New(responseStruct.ErrNm)
+	} else {
+		return &responseStruct, nil
 	}
-	return parsedTime
 }
